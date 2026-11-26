@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 // The funniest one-line error message an AI agent shows when it runs out
@@ -17,6 +17,13 @@ if (LINE.length < 1 || LINE.length > 140) {
   throw new Error(`line must be 1-140 characters, got ${LINE.length}`);
 }
 writeFileSync(join(outDir, "entry.txt"), LINE, "utf8");
+// Read the file back and refuse a run whose write did not land exactly:
+// a truncated or altered entry would fail the gate or be judged as a
+// different line than the one reviewed here.
+const written = readFileSync(join(outDir, "entry.txt"), "utf8");
+if (written !== LINE) {
+  throw new Error("entry.txt does not match the reviewed line");
+}
 // Report what was written so a run's output shows the entry stayed in
 // gate range (1-140 characters) without re-reading the file.
 console.log(`wrote ${LINE.length}-character entry to ${join(outDir, "entry.txt")}`);
